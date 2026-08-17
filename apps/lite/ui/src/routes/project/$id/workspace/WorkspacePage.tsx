@@ -17,11 +17,13 @@ import {
 import { projectSlice } from "#ui/projects/state.ts";
 import { interfaceSlice } from "#ui/interface/state.ts";
 import { PickerDialog } from "#ui/components/PickerDialog.tsx";
+import { AddProjectButton } from "#ui/components/AddProjectButton.tsx";
 import { ResizeHandle } from "#ui/components/ResizeHandle.tsx";
 import { globalHotkeys, workspaceHotkeys } from "#ui/hotkeys.ts";
 import { writeLastOpenedProject } from "#ui/project.ts";
 import { useAppDispatch, useAppSelector } from "#ui/store.ts";
 import type { ProjectForFrontend, RefInfo, TreeChange, WorktreeChanges } from "@gitbutler/but-sdk";
+import { LiteTestId } from "@gitbutler/ui/utils/testIds";
 import { useHotkey, useHotkeys, type UseHotkeyDefinition } from "@tanstack/react-hotkeys";
 import {
 	QueryErrorResetBoundary,
@@ -350,6 +352,13 @@ const ProjectPicker: FC<ProjectPickerProps> = (p) => {
 			ariaLabel="Select project"
 			closeLabel="Close project picker"
 			emptyLabel="No projects found."
+			footerAction={
+				<AddProjectButton
+					testId={LiteTestId.ProjectPickerAddLocalProjectButton}
+					size="small"
+					onBeforePick={() => p.onOpenChange(false)}
+				/>
+			}
 			getItemKey={(project) => project.id}
 			getItemLabel={(project) => project.title}
 			getItemType={(project) => (project.id === p.selectedProjectId ? "Current" : "Project")}
@@ -661,52 +670,53 @@ const WorkspacePage: FC = () => {
 
 	return (
 		<>
-			<Group
-				id={layoutId}
-				className={styles.page}
-				defaultLayout={workspaceLayout.defaultLayout}
-				onLayoutChanged={workspaceLayout.onLayoutChanged}
-				data-selection-focus-styles={
-					!(outlineMode._tag === "Transfer" && outlineMode.value._tag === "Pointer")
-				}
-			>
-				<Activity mode={detailsFullWindow ? "hidden" : "visible"}>
-					<Panel
-						id={"outline-panel" satisfies PanelId}
-						className={styles.panel}
-						minSize={260}
-						defaultSize={420}
-						groupResizeBehavior="preserve-pixel-size"
-					>
-						{/* No reset key: the child is built inline, so its identity changes
-						    every render. Recovery here is the fallback's Retry button. */}
-						<ErrorBoundary>
-							<Outline
-								projectId={projectId}
-								project={selectedProject}
-								branchesOutline={branchesOutline}
-								upstreamOutline={upstreamOutline}
-								navigationIndex={outlineNavigationIndex}
-								uncommittedFilesNavigationIndex={uncommittedFilesNavigationIndex}
-								absorptionTargetCommitIds={absorptionTargetCommitIds}
-								onActiveFileSelection={onActiveUncommittedFileSelection}
-							/>
-						</ErrorBoundary>
-					</Panel>
-					<ResizeHandle />
-				</Activity>
-
-				<Panel
-					id={"details-panel" satisfies PanelId}
-					className={styles.panel}
-					data-selection-scope={"details" satisfies SelectionScope}
+			<div className={styles.page} data-testid={LiteTestId.Workspace}>
+				<Group
+					id={layoutId}
+					defaultLayout={workspaceLayout.defaultLayout}
+					onLayoutChanged={workspaceLayout.onLayoutChanged}
+					data-selection-focus-styles={
+						!(outlineMode._tag === "Transfer" && outlineMode.value._tag === "Pointer")
+					}
 				>
-					{/* Keyed on the deferred view itself, not on the URL: the deferred
+					<Activity mode={detailsFullWindow ? "hidden" : "visible"}>
+						<Panel
+							id={"outline-panel" satisfies PanelId}
+							className={styles.panel}
+							minSize={260}
+							defaultSize={420}
+							groupResizeBehavior="preserve-pixel-size"
+						>
+							{/* No reset key: the child is built inline, so its identity changes
+						    every render. Recovery here is the fallback's Retry button. */}
+							<ErrorBoundary>
+								<Outline
+									projectId={projectId}
+									project={selectedProject}
+									branchesOutline={branchesOutline}
+									upstreamOutline={upstreamOutline}
+									navigationIndex={outlineNavigationIndex}
+									uncommittedFilesNavigationIndex={uncommittedFilesNavigationIndex}
+									absorptionTargetCommitIds={absorptionTargetCommitIds}
+									onActiveFileSelection={onActiveUncommittedFileSelection}
+								/>
+							</ErrorBoundary>
+						</Panel>
+						<ResizeHandle />
+					</Activity>
+
+					<Panel
+						id={"details-panel" satisfies PanelId}
+						className={styles.panel}
+						data-selection-scope={"details" satisfies SelectionScope}
+					>
+						{/* Keyed on the deferred view itself, not on the URL: the deferred
 					    value still holds the old view for a beat after navigating, so a
 					    URL key would clear the error onto the element that just threw. */}
-					<ErrorBoundary resetKeys={[deferredDetails]}>{deferredDetails}</ErrorBoundary>
-				</Panel>
-			</Group>
+						<ErrorBoundary resetKeys={[deferredDetails]}>{deferredDetails}</ErrorBoundary>
+					</Panel>
+				</Group>
+			</div>
 
 			<OperationControls outlineNavigationIndex={outlineNavigationIndex} />
 
